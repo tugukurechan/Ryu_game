@@ -1,0 +1,40 @@
+name: Build Godot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  export:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            export_name: Linux/X11
+            output: Ryu_game.x86_64
+
+          - os: windows-latest
+            export_name: Windows Desktop
+            output: Ryu_game.exe
+
+          - os: macos-latest
+            export_name: macOS
+            output: Ryu_game.app
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Export
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot-version: 4.7.1
+          export-name: ${{ matrix.export_name }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.export_name }}
+          path: build/
