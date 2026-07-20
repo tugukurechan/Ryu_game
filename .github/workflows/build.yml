@@ -2,42 +2,37 @@ name: Build Godot 4.7.1
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   export:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            preset: "Linux"
-            artifact: "Linux"
-
-          - os: windows-latest
-            preset: "Windows Desktop"
-            artifact: "Windows"
-
-          - os: macos-latest
-            preset: "macOS"
-            artifact: "macOS"
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Export Godot Project
+      - name: Install Wine
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y wine64 wine32
+
+      - name: Export Game
+        id: export
         uses: firebelley/godot-export@v7.0.0
         with:
           godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip
           godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_export_templates.tpz
-          relative_project_path: .
+          relative_project_path: ./
           archive_output: true
           cache: true
 
-      - uses: actions/upload-artifact@v4
+          # あなたのexport_presets.cfgのmacOSプリセットだけをビルド
+          presets_to_export: macOS
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: exports
+          name: macOS
+          path: ${{ steps.export.outputs.archive_directory }}/*
